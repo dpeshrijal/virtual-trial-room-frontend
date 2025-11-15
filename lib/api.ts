@@ -70,7 +70,7 @@ export async function submitJob(
         headers: {
           "Content-Type": "application/json",
         },
-        timeout: 10000, // Short timeout for job submission
+        timeout: 30000, // 30 seconds for job submission (large images need more time)
       }
     );
 
