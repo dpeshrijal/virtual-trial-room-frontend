@@ -33,6 +33,7 @@ export default function VirtualTryOn() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("upload");
   const [mobileStep, setMobileStep] = useState<MobileStep>(1);
+  const [processingProgress, setProcessingProgress] = useState<number>(0);
 
   const onDropUser = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -83,9 +84,14 @@ export default function VirtualTryOn() {
     setIsProcessing(true);
     setViewMode("processing");
     setError(null);
+    setProcessingProgress(0);
 
     try {
-      const result = await processImages(userImage, outfitImage);
+      const result = await processImages(
+        userImage,
+        outfitImage,
+        (progress) => setProcessingProgress(progress)
+      );
       setResultImageUrl(result.imageUrl);
       setViewMode("result");
     } catch (err) {
@@ -974,10 +980,39 @@ export default function VirtualTryOn() {
               <h2 className="text-4xl md:text-5xl font-bold text-[#5A5A5A] mb-4 md:mb-6 tracking-tight">
                 Creating Magic
               </h2>
-              <p className="text-[#5A5A5A]/70 text-base md:text-lg mb-10 md:mb-16 max-w-lg mx-auto leading-relaxed">
+              <p className="text-[#5A5A5A]/70 text-base md:text-lg mb-6 md:mb-8 max-w-lg mx-auto leading-relaxed">
                 Our AI is analyzing and transforming your look with cutting-edge
                 technology...
               </p>
+
+              {/* Progress bar */}
+              {processingProgress > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-md mx-auto mb-10 md:mb-16"
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm md:text-base text-[#5A5A5A] font-medium">
+                      Processing
+                    </span>
+                    <span className="text-sm md:text-base text-[#D4AF7A] font-bold">
+                      {processingProgress}%
+                    </span>
+                  </div>
+                  <div className="h-2 md:h-2.5 rounded-full bg-[#FEFDFB]/80 backdrop-blur-xl border border-[#E8D5D0]/60 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${processingProgress}%` }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0]"
+                      style={{
+                        boxShadow: "0 0 12px rgba(212, 175, 122, 0.6)",
+                      }}
+                    />
+                  </div>
+                </motion.div>
+              )}
 
               {/* Progress dots */}
               <div className="flex justify-center gap-2.5 md:gap-3 mb-8 md:mb-12">
