@@ -1169,18 +1169,20 @@ export default function VirtualTryOn() {
                 </motion.button>
               </div>
 
-              <motion.button
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 500, damping: 30 }}
-                onClick={handleReset}
-                className="w-full max-w-2xl mx-auto py-3.5 md:py-4 rounded-[18px] bg-[#E8D5D0]/20 backdrop-blur-xl text-[#5A5A5A] font-medium hover:bg-[#E8D5D0]/30 transition-colors text-sm md:text-base border border-[#E8D5D0]/40"
-                style={{
-                  boxShadow: "0 4px 16px -4px rgba(232, 213, 208, 0.2)",
-                }}
-              >
-                Try Another Outfit
-              </motion.button>
+              <div className="max-w-2xl mx-auto w-full">
+                <motion.button
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 500, damping: 30 }}
+                  onClick={handleReset}
+                  className="w-full py-3.5 md:py-4 rounded-[18px] bg-[#E8D5D0]/20 backdrop-blur-xl text-[#5A5A5A] font-medium hover:bg-[#E8D5D0]/30 transition-colors text-sm md:text-base border border-[#E8D5D0]/40"
+                  style={{
+                    boxShadow: "0 4px 16px -4px rgba(232, 213, 208, 0.2)",
+                  }}
+                >
+                  Try Another Outfit
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         )}
