@@ -34,6 +34,7 @@ export default function VirtualTryOn() {
   const [viewMode, setViewMode] = useState<ViewMode>("upload");
   const [mobileStep, setMobileStep] = useState<MobileStep>(1);
   const [processingProgress, setProcessingProgress] = useState<number>(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const onDropUser = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -85,6 +86,7 @@ export default function VirtualTryOn() {
     setViewMode("processing");
     setError(null);
     setProcessingProgress(0);
+    setImageLoaded(false);
 
     try {
       const result = await processImages(
@@ -111,6 +113,7 @@ export default function VirtualTryOn() {
     setError(null);
     setViewMode("upload");
     setMobileStep(1);
+    setImageLoaded(false);
   };
 
   return (
@@ -1127,12 +1130,36 @@ export default function VirtualTryOn() {
                   boxShadow: "0 20px 60px -12px rgba(90, 90, 90, 0.15)",
                 }}
               >
+                {/* Loading skeleton */}
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#F5F1ED] via-[#FEFDFB] to-[#E8D5D0] flex items-center justify-center">
+                    <motion.div
+                      animate={{
+                        opacity: [0.5, 1, 0.5],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      className="flex flex-col items-center gap-4"
+                    >
+                      <Sparkles className="w-12 h-12 text-[#D4AF7A]" />
+                      <p className="text-sm text-[#5A5A5A]/60">Loading result...</p>
+                    </motion.div>
+                  </div>
+                )}
+
                 <Image
                   src={resultImageUrl}
                   alt="Result"
                   fill
-                  className="object-contain bg-[#FEFDFB]"
+                  className={cn(
+                    "object-contain bg-[#FEFDFB] transition-opacity duration-300",
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  )}
                   priority
+                  onLoad={() => setImageLoaded(true)}
                 />
               </motion.div>
             </div>
