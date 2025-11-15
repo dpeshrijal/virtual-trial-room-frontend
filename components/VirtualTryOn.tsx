@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 type ViewMode = "upload" | "processing" | "result";
+type MobileStep = 1 | 2;
 
 export default function VirtualTryOn() {
   const [userImage, setUserImage] = useState<File | null>(null);
@@ -31,6 +32,7 @@ export default function VirtualTryOn() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("upload");
+  const [mobileStep, setMobileStep] = useState<MobileStep>(1);
 
   const onDropUser = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -102,6 +104,7 @@ export default function VirtualTryOn() {
     setResultImageUrl(null);
     setError(null);
     setViewMode("upload");
+    setMobileStep(1);
   };
 
   return (
@@ -179,22 +182,38 @@ export default function VirtualTryOn() {
                   transition={{ duration: 0.6, ease: "easeOut" }}
                 >
                   <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2.5">
-                      <motion.div
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.8, ease: "easeInOut" }}
-                        className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#D4AF7A] to-[#E4C5B8] flex items-center justify-center"
-                        style={{
-                          boxShadow: "0 8px 32px -8px rgba(212, 175, 122, 0.35)",
-                        }}
+                    {/* Left: Back button or Logo */}
+                    {mobileStep === 2 ? (
+                      <motion.button
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        onClick={() => setMobileStep(1)}
+                        className="flex items-center gap-2 text-[#5A5A5A] hover:text-[#D4AF7A] transition-colors"
                       >
-                        <Sparkles className="w-4.5 h-4.5 text-[#FEFDFB]" />
-                      </motion.div>
-                      <span className="text-[#5A5A5A] font-bold text-lg tracking-tight">
-                        StyleAI
-                      </span>
-                    </div>
+                        <ArrowLeft className="w-5 h-5" />
+                        <span className="text-sm font-medium tracking-wide">Back</span>
+                      </motion.button>
+                    ) : (
+                      <div className="flex items-center gap-2.5">
+                        <motion.div
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.8, ease: "easeInOut" }}
+                          className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#D4AF7A] to-[#E4C5B8] flex items-center justify-center"
+                          style={{
+                            boxShadow: "0 8px 32px -8px rgba(212, 175, 122, 0.35)",
+                          }}
+                        >
+                          <Sparkles className="w-4.5 h-4.5 text-[#FEFDFB]" />
+                        </motion.div>
+                        <span className="text-[#5A5A5A] font-bold text-lg tracking-tight">
+                          StyleAI
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Right: Step indicator */}
                     <motion.div
+                      key={mobileStep}
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.2 }}
@@ -204,306 +223,272 @@ export default function VirtualTryOn() {
                       }}
                     >
                       <span className="text-xs font-medium text-[#5A5A5A] tracking-wide">
-                        BETA
+                        {mobileStep}/2
                       </span>
                     </motion.div>
                   </div>
 
-                  <h1 className="text-4xl font-bold mb-2 leading-tight tracking-tight">
-                    <span className="bg-gradient-to-r from-[#5A5A5A] via-[#D4AF7A] to-[#5A5A5A] bg-clip-text text-transparent">
-                      Virtual Try-On
-                    </span>
-                  </h1>
-                  <p className="text-[#5A5A5A]/70 text-sm font-light tracking-wide">
-                    AI-powered transformation in seconds
-                  </p>
+                  {/* Dynamic Title */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={mobileStep}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <h1 className="text-4xl font-bold mb-2 leading-tight tracking-tight">
+                        <span className="bg-gradient-to-r from-[#5A5A5A] via-[#D4AF7A] to-[#5A5A5A] bg-clip-text text-transparent">
+                          {mobileStep === 1 ? "Upload Your Photo" : "Choose Outfit"}
+                        </span>
+                      </h1>
+                      <p className="text-[#5A5A5A]/70 text-sm font-light tracking-wide">
+                        {mobileStep === 1
+                          ? "Stand straight for best results"
+                          : "Select the outfit you'd like to try"}
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
                 </motion.div>
               </div>
 
-              {/* Mobile Upload Section */}
-              <div className="flex-1 px-6 pb-6 min-h-0 flex flex-col gap-4">
-                {/* Upload Cards - Vertical Stack */}
-                <div className="flex-1 flex flex-col gap-3.5 min-h-0">
-                  {/* User Photo Card */}
-                  <div className="flex-1 flex flex-col min-h-0">
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        className="w-6 h-6 rounded-xl bg-gradient-to-br from-[#D4AF7A] to-[#E4C5B8] flex items-center justify-center"
-                        style={{
-                          boxShadow: "0 4px 16px -4px rgba(212, 175, 122, 0.3)",
-                        }}
-                      >
-                        <Camera className="w-3.5 h-3.5 text-[#FEFDFB]" />
-                      </motion.div>
-                      <span className="text-sm font-medium text-[#5A5A5A] tracking-wide">
-                        Your Photo
-                      </span>
-                      {userImagePreview && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                          className="ml-auto w-2 h-2 rounded-full bg-gradient-to-br from-[#C9D5C0] to-[#D4AF7A]"
-                          style={{
-                            boxShadow: "0 0 8px rgba(201, 213, 192, 0.6)",
-                          }}
-                        />
-                      )}
-                    </div>
-
-                    <div {...getUserRootProps()} className="flex-1 min-h-0">
-                      <motion.div
-                        whileTap={{ scale: 0.985 }}
-                        transition={{ duration: 0.15 }}
-                        className={cn(
-                          "relative h-full rounded-[20px] overflow-hidden transition-all backdrop-blur-xl",
-                          isUserDragActive
-                            ? "ring-2 ring-[#D4AF7A]"
-                            : userImagePreview
-                            ? "ring-1 ring-[#E8D5D0]/60"
-                            : "ring-1 ring-dashed ring-[#5A5A5A]/20"
-                        )}
-                        style={{
-                          background: userImagePreview
-                            ? "rgba(254, 253, 251, 0.95)"
-                            : "rgba(254, 253, 251, 0.6)",
-                          boxShadow: userImagePreview
-                            ? "0 8px 32px -8px rgba(90, 90, 90, 0.12)"
-                            : "0 4px 24px -8px rgba(90, 90, 90, 0.08)",
-                        }}
-                      >
-                        <input {...getUserInputProps()} />
-                        {userImagePreview ? (
-                          <>
-                            <Image
-                              src={userImagePreview}
-                              alt="You"
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#5A5A5A]/30 via-transparent to-transparent" />
-                            <motion.button
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setUserImage(null);
-                                setUserImagePreview(null);
-                              }}
-                              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center hover:bg-[#FEFDFB] transition-all"
-                              style={{
-                                boxShadow: "0 4px 16px -4px rgba(90, 90, 90, 0.2)",
-                              }}
-                            >
-                              <X className="w-4 h-4 text-[#5A5A5A]" />
-                            </motion.button>
-                          </>
-                        ) : (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                            <motion.div
-                              animate={{ y: [0, -8, 0] }}
-                              transition={{
-                                duration: 3,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                              }}
-                              className="w-14 h-14 rounded-[18px] bg-gradient-to-br from-[#D4AF7A] to-[#E4C5B8] flex items-center justify-center mb-3"
-                              style={{
-                                boxShadow: "0 12px 32px -8px rgba(212, 175, 122, 0.4)",
-                              }}
-                            >
-                              <Camera className="w-6 h-6 text-[#FEFDFB]" />
-                            </motion.div>
-                            <p className="text-base font-medium text-[#5A5A5A] tracking-wide">
-                              Tap to upload
-                            </p>
-                            <p className="text-xs text-[#5A5A5A]/50 mt-1 tracking-wide">
-                              or drag & drop
-                            </p>
-                          </div>
-                        )}
-                      </motion.div>
-                    </div>
-                  </div>
-
-                  {/* Outfit Photo Card */}
-                  <div className="flex-1 flex flex-col min-h-0">
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        className="w-6 h-6 rounded-xl bg-gradient-to-br from-[#C9D5C0] to-[#E6E1F0] flex items-center justify-center"
-                        style={{
-                          boxShadow: "0 4px 16px -4px rgba(201, 213, 192, 0.3)",
-                        }}
-                      >
-                        <Shirt className="w-3.5 h-3.5 text-[#FEFDFB]" />
-                      </motion.div>
-                      <span className="text-sm font-medium text-[#5A5A5A] tracking-wide">
-                        Outfit Photo
-                      </span>
-                      {outfitImagePreview && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                          className="ml-auto w-2 h-2 rounded-full bg-gradient-to-br from-[#C9D5C0] to-[#D4AF7A]"
-                          style={{
-                            boxShadow: "0 0 8px rgba(201, 213, 192, 0.6)",
-                          }}
-                        />
-                      )}
-                    </div>
-
-                    <div {...getOutfitRootProps()} className="flex-1 min-h-0">
-                      <motion.div
-                        whileTap={{ scale: 0.985 }}
-                        transition={{ duration: 0.15 }}
-                        className={cn(
-                          "relative h-full rounded-[20px] overflow-hidden transition-all backdrop-blur-xl",
-                          isOutfitDragActive
-                            ? "ring-2 ring-[#C9D5C0]"
-                            : outfitImagePreview
-                            ? "ring-1 ring-[#E8D5D0]/60"
-                            : "ring-1 ring-dashed ring-[#5A5A5A]/20"
-                        )}
-                        style={{
-                          background: outfitImagePreview
-                            ? "rgba(254, 253, 251, 0.95)"
-                            : "rgba(254, 253, 251, 0.6)",
-                          boxShadow: outfitImagePreview
-                            ? "0 8px 32px -8px rgba(90, 90, 90, 0.12)"
-                            : "0 4px 24px -8px rgba(90, 90, 90, 0.08)",
-                        }}
-                      >
-                        <input {...getOutfitInputProps()} />
-                        {outfitImagePreview ? (
-                          <>
-                            <Image
-                              src={outfitImagePreview}
-                              alt="Outfit"
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#5A5A5A]/30 via-transparent to-transparent" />
-                            <motion.button
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOutfitImage(null);
-                                setOutfitImagePreview(null);
-                              }}
-                              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center hover:bg-[#FEFDFB] transition-all"
-                              style={{
-                                boxShadow: "0 4px 16px -4px rgba(90, 90, 90, 0.2)",
-                              }}
-                            >
-                              <X className="w-4 h-4 text-[#5A5A5A]" />
-                            </motion.button>
-                          </>
-                        ) : (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                            <motion.div
-                              animate={{ y: [0, -8, 0] }}
-                              transition={{
-                                duration: 3,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                                delay: 0.5,
-                              }}
-                              className="w-14 h-14 rounded-[18px] bg-gradient-to-br from-[#C9D5C0] to-[#E6E1F0] flex items-center justify-center mb-3"
-                              style={{
-                                boxShadow: "0 12px 32px -8px rgba(201, 213, 192, 0.4)",
-                              }}
-                            >
-                              <Shirt className="w-6 h-6 text-[#FEFDFB]" />
-                            </motion.div>
-                            <p className="text-base font-medium text-[#5A5A5A] tracking-wide">
-                              Tap to upload
-                            </p>
-                            <p className="text-xs text-[#5A5A5A]/50 mt-1 tracking-wide">
-                              or drag & drop
-                            </p>
-                          </div>
-                        )}
-                      </motion.div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Features - Compact */}
-                <div className="flex gap-2 justify-center">
-                  {[
-                    { icon: Zap, label: "Instant", colors: "from-[#D4AF7A] to-[#E4C5B8]" },
-                    { icon: Sparkles, label: "AI", colors: "from-[#E6E1F0] to-[#C9D5C0]" },
-                    { icon: Wand2, label: "Realistic", colors: "from-[#E8D5D0] to-[#E6E1F0]" },
-                  ].map((feature, idx) => (
-                    <motion.div
-                      key={feature.label}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{
-                        delay: 0.3 + idx * 0.1,
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                      className="px-3 py-2 rounded-full bg-[#FEFDFB]/60 backdrop-blur-xl border border-[#5A5A5A]/10 flex items-center gap-2"
-                      style={{
-                        boxShadow: "0 2px 12px -4px rgba(90, 90, 90, 0.08)",
-                      }}
-                    >
-                      <div className={cn("w-1.5 h-1.5 rounded-full bg-gradient-to-br", feature.colors)} />
-                      <span className="text-xs text-[#5A5A5A] font-medium tracking-wide">
-                        {feature.label}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-2xl bg-[#E4C5B8]/20 backdrop-blur-xl border border-[#E4C5B8]/40"
-                    style={{
-                      boxShadow: "0 4px 16px -4px rgba(228, 197, 184, 0.2)",
-                    }}
-                  >
-                    <p className="text-sm text-[#5A5A5A] text-center font-medium tracking-wide">
-                      {error}
-                    </p>
-                  </motion.div>
-                )}
-
-                {/* Transform Button */}
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  whileHover={{ scale: userImage && outfitImage ? 1.01 : 1 }}
-                  onClick={handleTryOn}
-                  disabled={!userImage || !outfitImage || isProcessing}
-                  className={cn(
-                    "relative py-4 rounded-[20px] font-bold text-base overflow-hidden transition-all",
-                    userImage && outfitImage
-                      ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A]"
-                      : "bg-[#FEFDFB]/40 text-[#5A5A5A]/30 cursor-not-allowed backdrop-blur-xl border border-[#5A5A5A]/10"
-                  )}
-                  style={{
-                    boxShadow:
-                      userImage && outfitImage
-                        ? "0 12px 32px -8px rgba(212, 175, 122, 0.3)"
-                        : "0 4px 16px -4px rgba(90, 90, 90, 0.05)",
-                  }}
+              {/* Mobile Upload Section - Step-based */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={mobileStep}
+                  initial={{ x: 100, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -100, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  className="flex-1 px-6 pb-6 min-h-0 flex flex-col gap-4"
                 >
-                  <span className="relative flex items-center justify-center gap-2.5 tracking-wide">
-                    <Sparkles className="w-5 h-5" />
-                    Transform Now
-                  </span>
-                </motion.button>
-              </div>
+                  {mobileStep === 1 ? (
+                    /* STEP 1: User Photo */
+                    <>
+                      <div className="flex-1 min-h-0" {...getUserRootProps()}>
+                        <motion.div
+                          whileTap={{ scale: 0.985 }}
+                          className={cn(
+                            "relative h-full rounded-[24px] overflow-hidden transition-all backdrop-blur-xl cursor-pointer",
+                            isUserDragActive
+                              ? "ring-2 ring-[#D4AF7A]"
+                              : userImagePreview
+                              ? "ring-1 ring-[#E8D5D0]/60"
+                              : "ring-1 ring-dashed ring-[#5A5A5A]/20"
+                          )}
+                          style={{
+                            background: userImagePreview
+                              ? "rgba(254, 253, 251, 0.95)"
+                              : "rgba(254, 253, 251, 0.6)",
+                            boxShadow: userImagePreview
+                              ? "0 8px 32px -8px rgba(90, 90, 90, 0.12)"
+                              : "0 4px 24px -8px rgba(90, 90, 90, 0.08)",
+                          }}
+                        >
+                          <input {...getUserInputProps()} />
+                          {userImagePreview ? (
+                            <>
+                              <Image
+                                src={userImagePreview}
+                                alt="You"
+                                fill
+                                className="object-contain"
+                              />
+                              <motion.button
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setUserImage(null);
+                                  setUserImagePreview(null);
+                                }}
+                                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center"
+                                style={{
+                                  boxShadow:
+                                    "0 4px 16px -4px rgba(90, 90, 90, 0.2)",
+                                }}
+                              >
+                                <X className="w-5 h-5 text-[#5A5A5A]" />
+                              </motion.button>
+                            </>
+                          ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
+                              <motion.div
+                                animate={{ y: [0, -10, 0] }}
+                                transition={{
+                                  duration: 3,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                }}
+                                className="w-24 h-24 rounded-[24px] bg-gradient-to-br from-[#D4AF7A] to-[#E4C5B8] flex items-center justify-center mb-6"
+                                style={{
+                                  boxShadow:
+                                    "0 12px 32px -8px rgba(212, 175, 122, 0.4)",
+                                }}
+                              >
+                                <Camera className="w-12 h-12 text-[#FEFDFB]" />
+                              </motion.div>
+                              <p className="text-2xl font-bold text-[#5A5A5A] mb-2">
+                                {isUserDragActive ? "Drop here" : "Upload Photo"}
+                              </p>
+                              <p className="text-sm text-[#5A5A5A]/60 mb-1">
+                                Tap to browse or drag & drop
+                              </p>
+                              <p className="text-xs text-[#5A5A5A]/40">
+                                PNG, JPG, WEBP • Max 10MB
+                              </p>
+                            </div>
+                          )}
+                        </motion.div>
+                      </div>
+
+                      {/* Continue Button */}
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setMobileStep(2)}
+                        disabled={!userImage}
+                        className={cn(
+                          "py-4 rounded-[20px] font-bold text-base",
+                          userImage
+                            ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A]"
+                            : "bg-[#FEFDFB]/40 text-[#5A5A5A]/30 cursor-not-allowed backdrop-blur-xl border border-[#5A5A5A]/10"
+                        )}
+                        style={{
+                          boxShadow: userImage
+                            ? "0 12px 32px -8px rgba(212, 175, 122, 0.3)"
+                            : "0 4px 16px -4px rgba(90, 90, 90, 0.05)",
+                        }}
+                      >
+                        <span className="flex items-center justify-center gap-2.5">
+                          Continue
+                          <ArrowLeft className="w-5 h-5 rotate-180" />
+                        </span>
+                      </motion.button>
+                    </>
+                  ) : (
+                    /* STEP 2: Outfit Photo */
+                    <>
+                      <div className="flex-1 min-h-0" {...getOutfitRootProps()}>
+                        <motion.div
+                          whileTap={{ scale: 0.985 }}
+                          className={cn(
+                            "relative h-full rounded-[24px] overflow-hidden transition-all backdrop-blur-xl cursor-pointer",
+                            isOutfitDragActive
+                              ? "ring-2 ring-[#C9D5C0]"
+                              : outfitImagePreview
+                              ? "ring-1 ring-[#E8D5D0]/60"
+                              : "ring-1 ring-dashed ring-[#5A5A5A]/20"
+                          )}
+                          style={{
+                            background: outfitImagePreview
+                              ? "rgba(254, 253, 251, 0.95)"
+                              : "rgba(254, 253, 251, 0.6)",
+                            boxShadow: outfitImagePreview
+                              ? "0 8px 32px -8px rgba(90, 90, 90, 0.12)"
+                              : "0 4px 24px -8px rgba(90, 90, 90, 0.08)",
+                          }}
+                        >
+                          <input {...getOutfitInputProps()} />
+                          {outfitImagePreview ? (
+                            <>
+                              <Image
+                                src={outfitImagePreview}
+                                alt="Outfit"
+                                fill
+                                className="object-contain"
+                              />
+                              <motion.button
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOutfitImage(null);
+                                  setOutfitImagePreview(null);
+                                }}
+                                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center"
+                                style={{
+                                  boxShadow:
+                                    "0 4px 16px -4px rgba(90, 90, 90, 0.2)",
+                                }}
+                              >
+                                <X className="w-5 h-5 text-[#5A5A5A]" />
+                              </motion.button>
+                            </>
+                          ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
+                              <motion.div
+                                animate={{ y: [0, -10, 0] }}
+                                transition={{
+                                  duration: 3,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                }}
+                                className="w-24 h-24 rounded-[24px] bg-gradient-to-br from-[#C9D5C0] to-[#E6E1F0] flex items-center justify-center mb-6"
+                                style={{
+                                  boxShadow:
+                                    "0 12px 32px -8px rgba(201, 213, 192, 0.4)",
+                                }}
+                              >
+                                <Shirt className="w-12 h-12 text-[#FEFDFB]" />
+                              </motion.div>
+                              <p className="text-2xl font-bold text-[#5A5A5A] mb-2">
+                                {isOutfitDragActive ? "Drop here" : "Upload Outfit"}
+                              </p>
+                              <p className="text-sm text-[#5A5A5A]/60 mb-1">
+                                Tap to browse or drag & drop
+                              </p>
+                              <p className="text-xs text-[#5A5A5A]/40">
+                                PNG, JPG, WEBP • Max 10MB
+                              </p>
+                            </div>
+                          )}
+                        </motion.div>
+                      </div>
+
+                      {/* Transform Button */}
+                      {error && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-3 rounded-2xl bg-[#E4C5B8]/20 backdrop-blur-xl border border-[#E4C5B8]/40"
+                          style={{
+                            boxShadow:
+                              "0 4px 16px -4px rgba(228, 197, 184, 0.2)",
+                          }}
+                        >
+                          <p className="text-sm text-[#5A5A5A] text-center font-medium">
+                            {error}
+                          </p>
+                        </motion.div>
+                      )}
+
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={handleTryOn}
+                        disabled={!outfitImage || isProcessing}
+                        className={cn(
+                          "py-4 rounded-[20px] font-bold text-base",
+                          outfitImage
+                            ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A]"
+                            : "bg-[#FEFDFB]/40 text-[#5A5A5A]/30 cursor-not-allowed backdrop-blur-xl border border-[#5A5A5A]/10"
+                        )}
+                        style={{
+                          boxShadow: outfitImage
+                            ? "0 12px 32px -8px rgba(212, 175, 122, 0.3)"
+                            : "0 4px 16px -4px rgba(90, 90, 90, 0.05)",
+                        }}
+                      >
+                        <span className="flex items-center justify-center gap-2.5">
+                          <Sparkles className="w-5 h-5" />
+                          Transform Now
+                        </span>
+                      </motion.button>
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             {/* DESKTOP LAYOUT (md and up) - PREMIUM DENSE DESIGN */}
