@@ -35,6 +35,7 @@ export default function VirtualTryOn() {
   const [mobileStep, setMobileStep] = useState<MobileStep>(1);
   const [processingProgress, setProcessingProgress] = useState<number>(0);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [garmentType, setGarmentType] = useState<string>("auto");
 
   const onDropUser = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -92,7 +93,8 @@ export default function VirtualTryOn() {
       const result = await processImages(
         userImage,
         outfitImage,
-        (progress) => setProcessingProgress(progress)
+        (progress) => setProcessingProgress(progress),
+        garmentType === "auto" ? undefined : garmentType
       );
       setResultImageUrl(result.imageUrl);
       setViewMode("result");
@@ -297,11 +299,21 @@ export default function VirtualTryOn() {
                           <input {...getUserInputProps()} />
                           {userImagePreview ? (
                             <>
+                              {/* Blurred background */}
+                              <div className="absolute inset-0">
+                                <Image
+                                  src={userImagePreview}
+                                  alt="Background"
+                                  fill
+                                  className="object-cover blur-2xl opacity-30"
+                                />
+                              </div>
+                              {/* Main image */}
                               <Image
                                 src={userImagePreview}
                                 alt="You"
                                 fill
-                                className="object-contain"
+                                className="object-contain relative z-10"
                               />
                               <motion.button
                                 initial={{ scale: 0, opacity: 0 }}
@@ -312,7 +324,7 @@ export default function VirtualTryOn() {
                                   setUserImage(null);
                                   setUserImagePreview(null);
                                 }}
-                                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center"
+                                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center z-20"
                                 style={{
                                   boxShadow:
                                     "0 4px 16px -4px rgba(90, 90, 90, 0.2)",
@@ -339,12 +351,15 @@ export default function VirtualTryOn() {
                                 <Camera className="w-12 h-12 text-[#FEFDFB]" />
                               </motion.div>
                               <p className="text-2xl font-bold text-[#5A5A5A] mb-2">
-                                {isUserDragActive ? "Drop here" : "Upload Photo"}
+                                {isUserDragActive ? "Drop here" : "Upload Your Photo"}
                               </p>
-                              <p className="text-sm text-[#5A5A5A]/60 mb-1">
+                              <p className="text-base text-[#5A5A5A]/70 mb-3 font-medium text-center px-4">
+                                Full body, front-facing photo
+                              </p>
+                              <p className="text-sm text-[#5A5A5A]/50 mb-1 font-light text-center">
                                 Tap to browse or drag & drop
                               </p>
-                              <p className="text-xs text-[#5A5A5A]/40">
+                              <p className="text-xs text-[#5A5A5A]/40 font-light">
                                 PNG, JPG, WEBP • Max 10MB
                               </p>
                             </div>
@@ -401,11 +416,21 @@ export default function VirtualTryOn() {
                           <input {...getOutfitInputProps()} />
                           {outfitImagePreview ? (
                             <>
+                              {/* Blurred background */}
+                              <div className="absolute inset-0">
+                                <Image
+                                  src={outfitImagePreview}
+                                  alt="Background"
+                                  fill
+                                  className="object-cover blur-2xl opacity-30"
+                                />
+                              </div>
+                              {/* Main image */}
                               <Image
                                 src={outfitImagePreview}
                                 alt="Outfit"
                                 fill
-                                className="object-contain"
+                                className="object-contain relative z-10"
                               />
                               <motion.button
                                 initial={{ scale: 0, opacity: 0 }}
@@ -416,7 +441,7 @@ export default function VirtualTryOn() {
                                   setOutfitImage(null);
                                   setOutfitImagePreview(null);
                                 }}
-                                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center"
+                                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center z-20"
                                 style={{
                                   boxShadow:
                                     "0 4px 16px -4px rgba(90, 90, 90, 0.2)",
@@ -445,16 +470,43 @@ export default function VirtualTryOn() {
                               <p className="text-2xl font-bold text-[#5A5A5A] mb-2">
                                 {isOutfitDragActive ? "Drop here" : "Upload Outfit"}
                               </p>
-                              <p className="text-sm text-[#5A5A5A]/60 mb-1">
+                              <p className="text-base text-[#5A5A5A]/70 mb-3 font-medium text-center px-4">
+                                Clear photo on plain background
+                              </p>
+                              <p className="text-sm text-[#5A5A5A]/50 mb-1 font-light text-center">
                                 Tap to browse or drag & drop
                               </p>
-                              <p className="text-xs text-[#5A5A5A]/40">
+                              <p className="text-xs text-[#5A5A5A]/40 font-light">
                                 PNG, JPG, WEBP • Max 10MB
                               </p>
                             </div>
                           )}
                         </motion.div>
                       </div>
+
+                      {/* Garment Type Selector */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-2"
+                      >
+                        <label className="block text-xs font-medium text-[#5A5A5A]/70 px-1">
+                          Garment Type (Optional)
+                        </label>
+                        <select
+                          value={garmentType}
+                          onChange={(e) => setGarmentType(e.target.value)}
+                          className="w-full px-4 py-3 rounded-[16px] bg-[#FEFDFB]/80 backdrop-blur-xl border border-[#E8D5D0]/60 text-[#5A5A5A] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#D4AF7A]/50 transition-all"
+                          style={{
+                            boxShadow: "0 2px 12px -4px rgba(90, 90, 90, 0.08)",
+                          }}
+                        >
+                          <option value="auto">Auto Detect</option>
+                          <option value="top">Top (Shirt, T-shirt, Blouse, Jacket)</option>
+                          <option value="bottom">Bottom (Pants, Skirt, Shorts)</option>
+                          <option value="dress">Dress / Full Outfit</option>
+                        </select>
+                      </motion.div>
 
                       {/* Transform Button */}
                       {error && (
@@ -619,8 +671,8 @@ export default function VirtualTryOn() {
                           <h3 className="text-[#5A5A5A] font-bold text-base tracking-wide">
                             Your Photo
                           </h3>
-                          <p className="text-[#5A5A5A]/60 text-sm truncate font-light">
-                            Upload a clear photo
+                          <p className="text-[#5A5A5A]/60 text-xs truncate font-light">
+                            Full body, front-facing
                           </p>
                         </div>
                         {userImagePreview && (
@@ -679,13 +731,23 @@ export default function VirtualTryOn() {
                           <input {...getUserInputProps()} />
                           {userImagePreview ? (
                             <>
+                              {/* Blurred background */}
+                              <div className="absolute inset-0">
+                                <Image
+                                  src={userImagePreview}
+                                  alt="Background"
+                                  fill
+                                  className="object-cover blur-2xl opacity-30"
+                                />
+                              </div>
+                              {/* Main image */}
                               <Image
                                 src={userImagePreview}
                                 alt="You"
                                 fill
-                                className="object-contain"
+                                className="object-contain relative z-10"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-[#5A5A5A]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#5A5A5A]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20" />
                               <motion.button
                                 initial={{ scale: 0, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
@@ -695,7 +757,7 @@ export default function VirtualTryOn() {
                                   setUserImage(null);
                                   setUserImagePreview(null);
                                 }}
-                                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#FEFDFB] transition-all"
+                                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#FEFDFB] transition-all z-30"
                                 style={{
                                   boxShadow: "0 4px 16px -4px rgba(90, 90, 90, 0.2)",
                                 }}
@@ -717,13 +779,16 @@ export default function VirtualTryOn() {
                               >
                                 <Camera className="w-9 h-9 text-[#FEFDFB]" />
                               </motion.div>
-                              <p className="text-lg font-bold text-[#5A5A5A] mb-1.5 tracking-wide">
+                              <p className="text-lg font-bold text-[#5A5A5A] mb-1 tracking-wide">
                                 {isUserDragActive
                                   ? "Drop here"
-                                  : "Upload Photo"}
+                                  : "Upload Your Photo"}
                               </p>
-                              <p className="text-sm text-[#5A5A5A]/60 mb-2 font-light">
-                                Click or drag & drop
+                              <p className="text-sm text-[#5A5A5A]/70 mb-2.5 font-medium text-center">
+                                Full body, front-facing photo
+                              </p>
+                              <p className="text-xs text-[#5A5A5A]/50 mb-1 font-light text-center">
+                                Click to browse or drag & drop
                               </p>
                               <p className="text-xs text-[#5A5A5A]/40 font-light">
                                 PNG, JPG, WEBP • Max 10MB
@@ -765,7 +830,7 @@ export default function VirtualTryOn() {
                             Outfit Photo
                           </h3>
                           <p className="text-[#5A5A5A]/60 text-xs truncate">
-                            Choose clothing to try
+                            Clear garment image
                           </p>
                         </div>
                         {outfitImagePreview && (
@@ -824,13 +889,23 @@ export default function VirtualTryOn() {
                           <input {...getOutfitInputProps()} />
                           {outfitImagePreview ? (
                             <>
+                              {/* Blurred background */}
+                              <div className="absolute inset-0">
+                                <Image
+                                  src={outfitImagePreview}
+                                  alt="Background"
+                                  fill
+                                  className="object-cover blur-2xl opacity-30"
+                                />
+                              </div>
+                              {/* Main image */}
                               <Image
                                 src={outfitImagePreview}
                                 alt="Outfit"
                                 fill
-                                className="object-contain"
+                                className="object-contain relative z-10"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-[#5A5A5A]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#5A5A5A]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20" />
                               <motion.button
                                 initial={{ scale: 0, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
@@ -840,7 +915,7 @@ export default function VirtualTryOn() {
                                   setOutfitImage(null);
                                   setOutfitImagePreview(null);
                                 }}
-                                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl border border-[#E8D5D0]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#E4C5B8]/90 hover:border-[#E4C5B8] transition-all"
+                                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#FEFDFB]/95 backdrop-blur-xl border border-[#E8D5D0]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#E4C5B8]/90 hover:border-[#E4C5B8] transition-all z-30"
                                 style={{
                                   boxShadow:
                                     "0 4px 16px -4px rgba(90, 90, 90, 0.2)",
@@ -868,15 +943,18 @@ export default function VirtualTryOn() {
                               >
                                 <Shirt className="w-9 h-9 text-[#FEFDFB]" />
                               </motion.div>
-                              <p className="text-lg font-bold text-[#5A5A5A] mb-1.5 tracking-wide">
+                              <p className="text-lg font-bold text-[#5A5A5A] mb-1 tracking-wide">
                                 {isOutfitDragActive
                                   ? "Drop here"
                                   : "Upload Outfit"}
                               </p>
-                              <p className="text-xs text-[#5A5A5A]/60 mb-2">
-                                Click or drag & drop
+                              <p className="text-sm text-[#5A5A5A]/70 mb-2.5 font-medium text-center">
+                                Clear photo on plain background
                               </p>
-                              <p className="text-xs text-[#5A5A5A]/40">
+                              <p className="text-xs text-[#5A5A5A]/50 mb-1 font-light text-center">
+                                Click to browse or drag & drop
+                              </p>
+                              <p className="text-xs text-[#5A5A5A]/40 font-light">
                                 PNG, JPG, WEBP • Max 10MB
                               </p>
                             </div>
@@ -894,6 +972,30 @@ export default function VirtualTryOn() {
                   transition={{ delay: 0.3 }}
                   className="mt-6"
                 >
+                  {/* Garment Type Selector */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4"
+                  >
+                    <label className="block text-xs font-medium text-[#5A5A5A]/70 mb-2">
+                      Garment Type (Optional)
+                    </label>
+                    <select
+                      value={garmentType}
+                      onChange={(e) => setGarmentType(e.target.value)}
+                      className="w-full px-4 py-3 rounded-[16px] bg-[#FEFDFB]/80 backdrop-blur-xl border border-[#E8D5D0]/60 text-[#5A5A5A] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#D4AF7A]/50 transition-all"
+                      style={{
+                        boxShadow: "0 2px 8px -2px rgba(90, 90, 90, 0.08)",
+                      }}
+                    >
+                      <option value="auto">Auto Detect</option>
+                      <option value="top">Top (Shirt, T-shirt, Blouse, Jacket)</option>
+                      <option value="bottom">Bottom (Pants, Skirt, Shorts)</option>
+                      <option value="dress">Dress / Full Outfit</option>
+                    </select>
+                  </motion.div>
+
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
@@ -1130,9 +1232,19 @@ export default function VirtualTryOn() {
                   boxShadow: "0 20px 60px -12px rgba(90, 90, 90, 0.15)",
                 }}
               >
+                {/* Blurred background */}
+                <div className="absolute inset-0">
+                  <Image
+                    src={resultImageUrl}
+                    alt="Background"
+                    fill
+                    className="object-cover blur-2xl opacity-30"
+                  />
+                </div>
+
                 {/* Loading skeleton */}
                 {!imageLoaded && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#F5F1ED] via-[#FEFDFB] to-[#E8D5D0] flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#F5F1ED]/95 via-[#FEFDFB]/95 to-[#E8D5D0]/95 backdrop-blur-sm flex items-center justify-center z-10">
                     <motion.div
                       animate={{
                         opacity: [0.5, 1, 0.5],
@@ -1150,12 +1262,13 @@ export default function VirtualTryOn() {
                   </div>
                 )}
 
+                {/* Main result image */}
                 <Image
                   src={resultImageUrl}
                   alt="Result"
                   fill
                   className={cn(
-                    "object-contain bg-[#FEFDFB] transition-opacity duration-300",
+                    "object-contain relative z-10 transition-opacity duration-300",
                     imageLoaded ? "opacity-100" : "opacity-0"
                   )}
                   priority

@@ -43,11 +43,13 @@ export async function fileToBase64(file: File): Promise<string> {
  * Submit images for async processing
  * @param userImage - User's photo file
  * @param outfitImage - Outfit photo file
+ * @param garmentType - Optional type of garment (e.g., "top", "bottom", "dress", "full outfit")
  * @returns Promise with job ID
  */
 export async function submitJob(
   userImage: File,
-  outfitImage: File
+  outfitImage: File,
+  garmentType?: string
 ): Promise<JobSubmissionResponse> {
   try {
     // Convert images to base64
@@ -63,6 +65,7 @@ export async function submitJob(
         outfitImageBase64,
         userImageMimeType: userImage.type,
         outfitImageMimeType: outfitImage.type,
+        garmentType,
         async: true, // Flag for async processing
         saveToS3: true,
       },
@@ -157,16 +160,18 @@ export async function pollJobStatus(
  * @param userImage - User's photo file
  * @param outfitImage - Outfit photo file
  * @param onProgress - Optional callback for progress updates
+ * @param garmentType - Optional type of garment
  * @returns Promise with the processed image URL
  */
 export async function processImagesAsync(
   userImage: File,
   outfitImage: File,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  garmentType?: string
 ): Promise<ProcessImagesResponse> {
   try {
     // Step 1: Submit job
-    const jobSubmission = await submitJob(userImage, outfitImage);
+    const jobSubmission = await submitJob(userImage, outfitImage, garmentType);
 
     // Step 2: Poll for completion
     const result = await pollJobStatus(jobSubmission.jobId, onProgress);
@@ -186,16 +191,18 @@ export async function processImagesAsync(
  * @param userImage - User's photo file
  * @param outfitImage - Outfit photo file
  * @param onProgress - Optional callback for progress updates
+ * @param garmentType - Optional type of garment
  * @returns Promise with the processed image URL
  */
 export async function processImages(
   userImage: File,
   outfitImage: File,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  garmentType?: string
 ): Promise<ProcessImagesResponse> {
   try {
     // Try async pattern first
-    return await processImagesAsync(userImage, outfitImage, onProgress);
+    return await processImagesAsync(userImage, outfitImage, onProgress, garmentType);
   } catch (error) {
     // If async not supported, fall back to sync (old behavior)
     if (axios.isAxiosError(error) && error.response?.status === 400) {
