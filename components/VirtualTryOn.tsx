@@ -190,12 +190,32 @@ export default function VirtualTryOn() {
       // Check if we're on a mobile device
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      if (isMobile) {
-        // Mobile approach: Use share API if available, otherwise open in new tab for long-press save
-        if (navigator.share) {
-          // Fetch the image and share it
-          const response = await fetch(resultImageUrl);
-          const blob = await response.blob();
+      if (isMobile && navigator.share) {
+        // Mobile with Share API: Fast approach using canvas to get image data
+        try {
+          // Create an image element
+          const img = document.createElement("img");
+          img.crossOrigin = "anonymous"; // Enable CORS
+
+          // Wait for image to load
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = resultImageUrl;
+          });
+
+          // Create canvas and draw image
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0);
+
+          // Convert canvas to blob (much faster than fetching again)
+          const blob = await new Promise<Blob>((resolve) => {
+            canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95);
+          });
+
           const file = new File([blob], "styleai-result.jpg", { type: "image/jpeg" });
 
           await navigator.share({
@@ -203,10 +223,14 @@ export default function VirtualTryOn() {
             title: "Virtual Try-On Result",
             text: "Check out my virtual try-on result!",
           });
-        } else {
-          // Fallback: Open in new tab where user can long-press to save
+        } catch (shareError) {
+          console.error("Canvas share failed:", shareError);
+          // Fallback: Open in new tab
           window.open(resultImageUrl, "_blank");
         }
+      } else if (isMobile) {
+        // Mobile without Share API: Open in new tab for long-press save
+        window.open(resultImageUrl, "_blank");
       } else {
         // Desktop approach: Direct download
         const response = await fetch(resultImageUrl);
