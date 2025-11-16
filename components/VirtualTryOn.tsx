@@ -37,13 +37,70 @@ export default function VirtualTryOn() {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [garmentType, setGarmentType] = useState<string>("auto");
 
-  const onDropUser = useCallback((acceptedFiles: File[]) => {
+  // Helper function to convert images to JPEG if needed
+  const processImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      // If already JPEG, return as-is
+      if (file.type === "image/jpeg" || file.type === "image/jpg") {
+        resolve(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = document.createElement("img");
+        img.onload = () => {
+          // Create canvas and convert to JPEG
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+
+          if (!ctx) {
+            reject(new Error("Failed to get canvas context"));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0);
+
+          // Convert to JPEG blob with 0.92 quality
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Failed to convert image"));
+                return;
+              }
+              // Create new File from blob
+              const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                type: "image/jpeg",
+              });
+              resolve(newFile);
+            },
+            "image/jpeg",
+            0.92
+          );
+        };
+        img.onerror = () => reject(new Error("Failed to load image"));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const onDropUser = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
-      setUserImage(file);
-      setUserImagePreview(URL.createObjectURL(file));
-      setError(null);
-      setResultImageUrl(null);
+      try {
+        // Convert to JPEG if needed
+        const processedFile = await processImage(file);
+        setUserImage(processedFile);
+        setUserImagePreview(URL.createObjectURL(processedFile));
+        setError(null);
+        setResultImageUrl(null);
+      } catch (err) {
+        setError("Failed to process image. Please try a different file.");
+      }
     }
   }, []);
 
@@ -53,17 +110,23 @@ export default function VirtualTryOn() {
     isDragActive: isUserDragActive,
   } = useDropzone({
     onDrop: onDropUser,
-    accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp"] },
+    accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif"] },
     maxFiles: 1,
   });
 
-  const onDropOutfit = useCallback((acceptedFiles: File[]) => {
+  const onDropOutfit = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
-      setOutfitImage(file);
-      setOutfitImagePreview(URL.createObjectURL(file));
-      setError(null);
-      setResultImageUrl(null);
+      try {
+        // Convert to JPEG if needed
+        const processedFile = await processImage(file);
+        setOutfitImage(processedFile);
+        setOutfitImagePreview(URL.createObjectURL(processedFile));
+        setError(null);
+        setResultImageUrl(null);
+      } catch (err) {
+        setError("Failed to process image. Please try a different file.");
+      }
     }
   }, []);
 
@@ -73,7 +136,7 @@ export default function VirtualTryOn() {
     isDragActive: isOutfitDragActive,
   } = useDropzone({
     onDrop: onDropOutfit,
-    accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp"] },
+    accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif"] },
     maxFiles: 1,
   });
 
@@ -360,7 +423,7 @@ export default function VirtualTryOn() {
                                 Tap to browse or drag & drop
                               </p>
                               <p className="text-xs text-[#5A5A5A]/40 font-light">
-                                PNG, JPG, WEBP • Max 10MB
+                                All formats (auto-converted) • Max 10MB
                               </p>
                             </div>
                           )}
@@ -477,7 +540,7 @@ export default function VirtualTryOn() {
                                 Tap to browse or drag & drop
                               </p>
                               <p className="text-xs text-[#5A5A5A]/40 font-light">
-                                PNG, JPG, WEBP • Max 10MB
+                                All formats (auto-converted) • Max 10MB
                               </p>
                             </div>
                           )}
@@ -791,7 +854,7 @@ export default function VirtualTryOn() {
                                 Click to browse or drag & drop
                               </p>
                               <p className="text-xs text-[#5A5A5A]/40 font-light">
-                                PNG, JPG, WEBP • Max 10MB
+                                All formats (auto-converted) • Max 10MB
                               </p>
                             </div>
                           )}
@@ -955,7 +1018,7 @@ export default function VirtualTryOn() {
                                 Click to browse or drag & drop
                               </p>
                               <p className="text-xs text-[#5A5A5A]/40 font-light">
-                                PNG, JPG, WEBP • Max 10MB
+                                All formats (auto-converted) • Max 10MB
                               </p>
                             </div>
                           )}
