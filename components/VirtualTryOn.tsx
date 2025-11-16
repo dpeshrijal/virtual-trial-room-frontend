@@ -182,6 +182,35 @@ export default function VirtualTryOn() {
     setGarmentType("auto"); // Reset garment type to default
   };
 
+  // Handle direct download of result image
+  const handleDownload = async () => {
+    if (!resultImageUrl) return;
+
+    try {
+      // Fetch the image
+      const response = await fetch(resultImageUrl);
+      const blob = await response.blob();
+
+      // Create a temporary URL for the blob
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Create a temporary anchor element and trigger download
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "styleai-result.jpg";
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed:", error);
+      // Fallback: open in new tab if download fails
+      window.open(resultImageUrl, "_blank");
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-[#F5F1ED] via-[#FEFDFB] to-[#E8D5D0] overflow-hidden">
       {/* Luxury gradient background with texture */}
@@ -439,7 +468,7 @@ export default function VirtualTryOn() {
                         className={cn(
                           "py-4 rounded-[20px] font-bold text-base",
                           userImage
-                            ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A]"
+                            ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A] cursor-pointer"
                             : "bg-[#FEFDFB]/40 text-[#5A5A5A]/30 cursor-not-allowed backdrop-blur-xl border border-[#5A5A5A]/10"
                         )}
                         style={{
@@ -596,7 +625,7 @@ export default function VirtualTryOn() {
                         className={cn(
                           "py-4 rounded-[20px] font-bold text-base",
                           outfitImage
-                            ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A]"
+                            ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A] cursor-pointer"
                             : "bg-[#FEFDFB]/40 text-[#5A5A5A]/30 cursor-not-allowed backdrop-blur-xl border border-[#5A5A5A]/10"
                         )}
                         style={{
@@ -1083,7 +1112,7 @@ export default function VirtualTryOn() {
                     className={cn(
                       "relative w-full py-5 rounded-[20px] font-bold text-base overflow-hidden transition-all",
                       userImage && outfitImage
-                        ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A]"
+                        ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A] cursor-pointer"
                         : "bg-[#FEFDFB]/40 text-[#5A5A5A]/30 cursor-not-allowed backdrop-blur-xl border border-[#5A5A5A]/10"
                     )}
                     style={{
@@ -1344,26 +1373,25 @@ export default function VirtualTryOn() {
             {/* Action buttons */}
             <div className="flex-shrink-0 p-4 md:p-6 pb-safe space-y-3 bg-gradient-to-t from-[#FEFDFB]/95 via-[#FEFDFB]/80 to-transparent">
               <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
-                <motion.a
+                <motion.button
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.1, type: "spring", stiffness: 500, damping: 30 }}
-                  href={resultImageUrl}
-                  download="styleai-result.jpg"
-                  className="py-3.5 md:py-4 rounded-[18px] bg-gradient-to-r from-[#C9D5C0] to-[#E6E1F0] text-[#5A5A5A] font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-shadow"
+                  onClick={handleDownload}
+                  className="py-3.5 md:py-4 rounded-[18px] bg-gradient-to-r from-[#C9D5C0] to-[#E6E1F0] text-[#5A5A5A] font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-shadow cursor-pointer"
                   style={{
                     boxShadow: "0 8px 32px -8px rgba(201, 213, 192, 0.3)",
                   }}
                 >
                   <Download className="w-5 h-5" />
                   <span className="text-sm md:text-base tracking-wide">Download</span>
-                </motion.a>
+                </motion.button>
 
                 <motion.button
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 500, damping: 30 }}
-                  className="py-3.5 md:py-4 rounded-[18px] bg-[#FEFDFB]/80 backdrop-blur-xl text-[#5A5A5A] font-bold border border-[#E8D5D0]/60 hover:bg-[#E8D5D0]/20 transition-colors flex items-center justify-center gap-2"
+                  className="py-3.5 md:py-4 rounded-[18px] bg-[#FEFDFB]/80 backdrop-blur-xl text-[#5A5A5A] font-bold border border-[#E8D5D0]/60 hover:bg-[#E8D5D0]/20 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                   style={{
                     boxShadow: "0 4px 16px -4px rgba(90, 90, 90, 0.1)",
                   }}
@@ -1379,7 +1407,7 @@ export default function VirtualTryOn() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3, type: "spring", stiffness: 500, damping: 30 }}
                   onClick={handleReset}
-                  className="w-full py-3.5 md:py-4 rounded-[18px] bg-[#E8D5D0]/20 backdrop-blur-xl text-[#5A5A5A] font-medium hover:bg-[#E8D5D0]/30 transition-colors text-sm md:text-base border border-[#E8D5D0]/40"
+                  className="w-full py-3.5 md:py-4 rounded-[18px] bg-[#E8D5D0]/20 backdrop-blur-xl text-[#5A5A5A] font-medium hover:bg-[#E8D5D0]/30 transition-colors text-sm md:text-base border border-[#E8D5D0]/40 cursor-pointer"
                   style={{
                     boxShadow: "0 4px 16px -4px rgba(232, 213, 208, 0.2)",
                   }}
