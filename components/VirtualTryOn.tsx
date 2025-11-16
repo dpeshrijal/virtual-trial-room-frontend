@@ -179,6 +179,7 @@ export default function VirtualTryOn() {
     setViewMode("upload");
     setMobileStep(1);
     setImageLoaded(false);
+    setGarmentType("auto"); // Reset garment type to default
   };
 
   return (
