@@ -35,7 +35,7 @@ export default function VirtualTryOn() {
   const [mobileStep, setMobileStep] = useState<MobileStep>(1);
   const [processingProgress, setProcessingProgress] = useState<number>(0);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [garmentType, setGarmentType] = useState<string>("auto");
+  const [garmentType, setGarmentType] = useState<string>("");
 
   // Helper function to convert images to JPEG if needed
   const processImage = async (file: File): Promise<File> => {
@@ -179,7 +179,7 @@ export default function VirtualTryOn() {
     setViewMode("upload");
     setMobileStep(1);
     setImageLoaded(false);
-    setGarmentType("auto"); // Reset garment type to default
+    setGarmentType(""); // Reset garment type to default
   };
 
   // Handle direct download of result image
@@ -602,7 +602,7 @@ export default function VirtualTryOn() {
                         className="space-y-2"
                       >
                         <label className="block text-xs font-medium text-[#5A5A5A]/70 px-1">
-                          Garment Type (Optional)
+                          Garment Type (Required) *
                         </label>
                         <select
                           value={garmentType}
@@ -612,7 +612,7 @@ export default function VirtualTryOn() {
                             boxShadow: "0 2px 12px -4px rgba(90, 90, 90, 0.08)",
                           }}
                         >
-                          <option value="auto">Auto Detect</option>
+                          <option value="" disabled>Select garment type...</option>
                           <option value="top">Top (Shirt, T-shirt, Blouse, Jacket)</option>
                           <option value="bottom">Bottom (Pants, Skirt, Shorts)</option>
                           <option value="dress">Dress / Full Outfit</option>
@@ -639,22 +639,26 @@ export default function VirtualTryOn() {
                       <motion.button
                         whileTap={{ scale: 0.97 }}
                         onClick={handleTryOn}
-                        disabled={!outfitImage || isProcessing}
+                        disabled={!outfitImage || !garmentType || isProcessing}
                         className={cn(
                           "py-4 rounded-[20px] font-bold text-base",
-                          outfitImage
+                          outfitImage && garmentType
                             ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A] cursor-pointer"
                             : "bg-[#FEFDFB]/40 text-[#5A5A5A]/30 cursor-not-allowed backdrop-blur-xl border border-[#5A5A5A]/10"
                         )}
                         style={{
-                          boxShadow: outfitImage
+                          boxShadow: outfitImage && garmentType
                             ? "0 12px 32px -8px rgba(212, 175, 122, 0.3)"
                             : "0 4px 16px -4px rgba(90, 90, 90, 0.05)",
                         }}
                       >
                         <span className="flex items-center justify-center gap-2.5">
                           <Sparkles className="w-5 h-5" />
-                          Transform Now
+                          {outfitImage && garmentType
+                            ? "Transform Now"
+                            : !garmentType
+                            ? "Select Garment Type"
+                            : "Upload Outfit Image"}
                         </span>
                       </motion.button>
                     </>
@@ -1090,7 +1094,7 @@ export default function VirtualTryOn() {
                     className="mb-4"
                   >
                     <label className="block text-xs font-medium text-[#5A5A5A]/70 mb-2">
-                      Garment Type (Optional)
+                      Garment Type (Required) *
                     </label>
                     <select
                       value={garmentType}
@@ -1100,7 +1104,7 @@ export default function VirtualTryOn() {
                         boxShadow: "0 2px 8px -2px rgba(90, 90, 90, 0.08)",
                       }}
                     >
-                      <option value="auto">Auto Detect</option>
+                      <option value="" disabled>Select garment type...</option>
                       <option value="top">Top (Shirt, T-shirt, Blouse, Jacket)</option>
                       <option value="bottom">Bottom (Pants, Skirt, Shorts)</option>
                       <option value="dress">Dress / Full Outfit</option>
@@ -1123,13 +1127,13 @@ export default function VirtualTryOn() {
                   )}
 
                   <motion.button
-                    whileHover={{ scale: userImage && outfitImage ? 1.01 : 1 }}
+                    whileHover={{ scale: userImage && outfitImage && garmentType ? 1.01 : 1 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={handleTryOn}
-                    disabled={!userImage || !outfitImage || isProcessing}
+                    disabled={!userImage || !outfitImage || !garmentType || isProcessing}
                     className={cn(
                       "relative w-full py-5 rounded-[20px] font-bold text-base overflow-hidden transition-all",
-                      userImage && outfitImage
+                      userImage && outfitImage && garmentType
                         ? "bg-gradient-to-r from-[#D4AF7A] via-[#E6E1F0] to-[#C9D5C0] text-[#5A5A5A] cursor-pointer"
                         : "bg-[#FEFDFB]/40 text-[#5A5A5A]/30 cursor-not-allowed backdrop-blur-xl border border-[#5A5A5A]/10"
                     )}
@@ -1150,8 +1154,10 @@ export default function VirtualTryOn() {
                     )}
                     <span className="relative flex items-center justify-center gap-2.5">
                       <Sparkles className="w-5 h-5" />
-                      {userImage && outfitImage
+                      {userImage && outfitImage && garmentType
                         ? "Transform Now"
+                        : !garmentType
+                        ? "Select Garment Type to Continue"
                         : "Upload Both Images to Continue"}
                     </span>
                   </motion.button>
