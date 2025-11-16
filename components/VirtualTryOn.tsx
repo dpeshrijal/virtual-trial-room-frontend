@@ -140,9 +140,91 @@ export default function VirtualTryOn() {
     maxFiles: 1,
   });
 
+  // Helper function to check if two images are too similar
+  const areImagesSimilar = async (
+    img1Url: string,
+    img2Url: string
+  ): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const canvas1 = document.createElement("canvas");
+      const canvas2 = document.createElement("canvas");
+      const img1 = document.createElement("img");
+      const img2 = document.createElement("img");
+
+      let img1Loaded = false;
+      let img2Loaded = false;
+
+      const checkBothLoaded = () => {
+        if (!img1Loaded || !img2Loaded) return;
+
+        try {
+          // Resize to small size for faster comparison
+          const size = 32;
+          canvas1.width = canvas2.width = size;
+          canvas1.height = canvas2.height = size;
+
+          const ctx1 = canvas1.getContext("2d");
+          const ctx2 = canvas2.getContext("2d");
+
+          if (!ctx1 || !ctx2) {
+            resolve(false);
+            return;
+          }
+
+          ctx1.drawImage(img1, 0, 0, size, size);
+          ctx2.drawImage(img2, 0, 0, size, size);
+
+          const data1 = ctx1.getImageData(0, 0, size, size).data;
+          const data2 = ctx2.getImageData(0, 0, size, size).data;
+
+          // Calculate average color difference
+          let diff = 0;
+          for (let i = 0; i < data1.length; i += 4) {
+            diff += Math.abs(data1[i] - data2[i]); // R
+            diff += Math.abs(data1[i + 1] - data2[i + 1]); // G
+            diff += Math.abs(data1[i + 2] - data2[i + 2]); // B
+          }
+
+          const avgDiff = diff / (size * size * 3);
+          // If average difference per pixel is less than 8 (out of 255), images are too similar
+          const isSimilar = avgDiff < 8;
+
+          console.log(`Image similarity check: avgDiff=${avgDiff.toFixed(2)}, similar=${isSimilar}`);
+          resolve(isSimilar);
+        } catch (error) {
+          console.error("Error comparing images:", error);
+          resolve(false); // If comparison fails, assume they're different
+        }
+      };
+
+      img1.crossOrigin = "anonymous";
+      img2.crossOrigin = "anonymous";
+
+      img1.onload = () => {
+        img1Loaded = true;
+        checkBothLoaded();
+      };
+      img2.onload = () => {
+        img2Loaded = true;
+        checkBothLoaded();
+      };
+
+      img1.onerror = () => resolve(false);
+      img2.onerror = () => resolve(false);
+
+      img1.src = img1Url;
+      img2.src = img2Url;
+    });
+  };
+
   const handleTryOn = async () => {
     if (!userImage || !outfitImage) {
       setError("Please upload both images");
+      return;
+    }
+
+    if (!userImagePreview) {
+      setError("User image not loaded");
       return;
     }
 
@@ -152,21 +234,53 @@ export default function VirtualTryOn() {
     setProcessingProgress(0);
     setImageLoaded(false);
 
-    try {
-      const result = await processImages(
-        userImage,
-        outfitImage,
-        (progress) => setProcessingProgress(progress),
-        garmentType === "auto" ? undefined : garmentType
-      );
-      setResultImageUrl(result.imageUrl);
-      setViewMode("result");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-      setViewMode("upload");
-    } finally {
-      setIsProcessing(false);
+    const maxRetries = 2; // Try up to 2 times total (1 initial + 1 retry)
+    let attempt = 0;
+
+    while (attempt < maxRetries) {
+      try {
+        attempt++;
+        console.log(`Processing attempt ${attempt}/${maxRetries}`);
+
+        const result = await processImages(
+          userImage,
+          outfitImage,
+          (progress) => setProcessingProgress(progress),
+          garmentType === "auto" ? undefined : garmentType
+        );
+
+        // Check if result is too similar to original
+        const isSimilar = await areImagesSimilar(userImagePreview, result.imageUrl);
+
+        if (isSimilar && attempt < maxRetries) {
+          console.log(`Result too similar to original, retrying (attempt ${attempt + 1}/${maxRetries})...`);
+          setProcessingProgress(0); // Reset progress for retry
+          continue; // Try again
+        }
+
+        if (isSimilar && attempt === maxRetries) {
+          console.warn("Result still similar after retries");
+          // Still show result but with a warning
+          setError("The outfit may not have changed noticeably. Try different images or garment type.");
+        }
+
+        setResultImageUrl(result.imageUrl);
+        setViewMode("result");
+        break; // Success, exit loop
+      } catch (err) {
+        if (attempt === maxRetries) {
+          // Last attempt failed, show error
+          setError(err instanceof Error ? err.message : "Something went wrong");
+          setViewMode("upload");
+        } else {
+          // Retry on error
+          console.log(`Error on attempt ${attempt}, retrying...`);
+          setProcessingProgress(0);
+        }
+      }
     }
+
+    setIsProcessing(false);
   };
 
   const handleReset = () => {
