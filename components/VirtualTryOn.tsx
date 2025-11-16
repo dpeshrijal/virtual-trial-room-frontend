@@ -187,26 +187,44 @@ export default function VirtualTryOn() {
     if (!resultImageUrl) return;
 
     try {
-      // Fetch the image
-      const response = await fetch(resultImageUrl);
-      const blob = await response.blob();
+      // Check if we're on a mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      // Create a temporary URL for the blob
-      const blobUrl = URL.createObjectURL(blob);
+      if (isMobile) {
+        // Mobile approach: Use share API if available, otherwise open in new tab for long-press save
+        if (navigator.share) {
+          // Fetch the image and share it
+          const response = await fetch(resultImageUrl);
+          const blob = await response.blob();
+          const file = new File([blob], "styleai-result.jpg", { type: "image/jpeg" });
 
-      // Create a temporary anchor element and trigger download
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = "styleai-result.jpg";
-      document.body.appendChild(a);
-      a.click();
+          await navigator.share({
+            files: [file],
+            title: "Virtual Try-On Result",
+            text: "Check out my virtual try-on result!",
+          });
+        } else {
+          // Fallback: Open in new tab where user can long-press to save
+          window.open(resultImageUrl, "_blank");
+        }
+      } else {
+        // Desktop approach: Direct download
+        const response = await fetch(resultImageUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
 
-      // Cleanup
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = "styleai-result.jpg";
+        document.body.appendChild(a);
+        a.click();
+
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
     } catch (error) {
       console.error("Download failed:", error);
-      // Fallback: open in new tab if download fails
+      // Final fallback: open in new tab
       window.open(resultImageUrl, "_blank");
     }
   };
